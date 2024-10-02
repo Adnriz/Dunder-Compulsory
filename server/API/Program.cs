@@ -2,6 +2,7 @@ using System.Text.Json;
 using API.Middleware;
 using DataAccess;
 using DataAccess.Interfaces;
+using DataAccess.Repositories;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -21,16 +22,16 @@ public class Program
             .ValidateDataAnnotations()
             .Validate(options => new AppOptionsValidator().Validate(options).IsValid,
                 $"{nameof(AppOptions)} validation failed");
-        builder.Services.AddDbContext<HospitalContext>((serviceProvider, options) =>
+        builder.Services.AddDbContext<WebShopContext>((serviceProvider, options) =>
         {
             var appOptions = serviceProvider.GetRequiredService<IOptions<AppOptions>>().Value;
             options.UseNpgsql(Environment.GetEnvironmentVariable("DbConnectionString") 
                               ?? appOptions.DbConnectionString);
             options.EnableSensitiveDataLogging();
         });
-        builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CreatePatientValidator>());
-        builder.Services.AddScoped<IHospitalRepository, HospitalRepository>();
-        builder.Services.AddScoped<IHospitalService, HospitalService>();
+        builder.Services.AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CreateOrderDtoValidator>());
+        builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+        builder.Services.AddScoped<IOrderService, OrderService>();
         builder.Services.AddControllers();
         builder.Services.AddOpenApiDocument();
 
@@ -55,7 +56,7 @@ public class Program
 
         using (var scope = app.Services.CreateScope())
         {
-            var context = scope.ServiceProvider.GetRequiredService<HospitalContext>();
+            var context = scope.ServiceProvider.GetRequiredService<WebShopContext>();
             context.Database.EnsureCreated();
         }
 
