@@ -1,5 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
 using DataAccess.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using Service.Interfaces;
+using Service.TransferModels.Requests;
 using DataAccess.Models;
 
 namespace API.Controllers
@@ -8,99 +10,54 @@ namespace API.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
+        private readonly IOrderService _orderService;
         private readonly IOrderRepository _orderRepository;
 
-        public OrdersController(IOrderRepository orderRepository)
+        public OrdersController(IOrderService orderService, IOrderRepository orderRepository)
         {
+            _orderService = orderService;
             _orderRepository = orderRepository;
         }
-
-        
-        [HttpGet]
-        public ActionResult<IEnumerable<Order>> GetOrders()
-        {
-            var orders = _orderRepository.GetAllOrders();
-            return Ok(orders);
-        }
-
-        
-        [HttpGet("{id}")]
-        public ActionResult<Order> GetOrder(int id)
-        {
-            var order = _orderRepository.GetOrder(id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(order);
-        }
-
         
         [HttpPost]
-        public ActionResult<Order> CreateOrder(Order order)
+        public IActionResult PlaceOrder(CreateOrderDto orderDto)
         {
-            _orderRepository.AddOrder(order);
-            return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
-        }
-
-        
-        [HttpPut("{id}")]
-        public IActionResult UpdateOrder(int id, Order order)
-        {
-            if (id != order.Id)
+            var order = new Order
             {
-                return BadRequest();
-            }
+                OrderDate = orderDto.OrderDate,
+                DeliveryDate = orderDto.DeliveryDate,
+                Status = orderDto.Status,
+                TotalAmount = orderDto.TotalAmount,
+                CustomerId = orderDto.CustomerId,
+                OrderEntries = orderDto.OrderEntries.Select(e => new OrderEntry
+                {
+                    Quantity = e.Quantity,
+                    ProductId = e.ProductId
+                }).ToList()
+            };
 
-            var existingOrder = _orderRepository.GetOrder(id);
-            if (existingOrder == null)
-            {
-                return NotFound();
-            }
-
-            _orderRepository.UpdateOrder(order);
-            return NoContent();
+            _orderService.PlaceOrder(order);
+            return Ok(order);
         }
-
-        
-        [HttpDelete("{id}")]
-        public IActionResult DeleteOrder(int id)
-        {
-            var existingOrder = _orderRepository.GetOrder(id);
-            if (existingOrder == null)
-            {
-                return NotFound();
-            }
-
-            _orderRepository.DeleteOrder(id);
-            return NoContent();
-        }
-
         
         [HttpGet("customer/{customerId}")]
-        public ActionResult<IEnumerable<Order>> GetOrdersByCustomerId(int customerId)
+        public IActionResult GetOrdersByCustomer(int customerId)
         {
-            var orders = _orderRepository.GetOrdersByCustomerId(customerId);
-            if (orders == null)
-            {
-                return NotFound();
-            }
-
+            var orders = _orderService.GetOrdersByCustomerId(customerId);
             return Ok(orders);
         }
-
         
-        [HttpPatch("{id}/status")]
-        public IActionResult UpdateOrderStatus(int id, [FromBody] string status)
+        [HttpGet]
+        public IActionResult GetAllOrders()
         {
-            var existingOrder = _orderRepository.GetOrder(id);
-            if (existingOrder == null)
-            {
-                return NotFound();
-            }
-
-            _orderRepository.UpdateOrderStatus(id, status);
+            var orders = _orderService.GetAllOrders();
+            return Ok(orders);
+        }
+        
+        [HttpPut("{orderId}/status")]
+        public IActionResult UpdateOrderStatus(int orderId, [FromBody] string status)
+        {
+            _orderService.UpdateOrderStatus(orderId, status);
             return NoContent();
         }
     }

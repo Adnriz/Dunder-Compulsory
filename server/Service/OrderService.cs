@@ -1,6 +1,6 @@
 using DataAccess.Interfaces;
 using DataAccess.Models;
-using DataAccess.Repositories;
+using System.Collections.Generic;
 
 namespace Service
 {
@@ -13,9 +13,13 @@ namespace Service
             _orderRepository = orderRepository;
         }
 
+        public IEnumerable<Order> GetAllOrders()
+        {
+            return _orderRepository.GetAllOrders();
+        }
+        
         public void PlaceOrder(Order order)
         {
-            order.OrderDate = DateTime.UtcNow;
             _orderRepository.AddOrder(order);
         }
 
@@ -24,9 +28,19 @@ namespace Service
             return _orderRepository.GetOrder(orderId);
         }
 
-        public Order[] GetAllOrders()
+        public void UpdateOrderStatus(int orderId, string status)
         {
-            return _orderRepository.GetAllOrders();
+            var order = _orderRepository.GetOrder(orderId);
+            if (order != null)
+            {
+                order.Status = status;
+                _orderRepository.UpdateOrder(order);
+            }
+        }
+
+        public IEnumerable<Order> GetOrdersByCustomerId(int customerId)
+        {
+            return _orderRepository.GetOrdersByCustomerId(customerId);
         }
     }
 }

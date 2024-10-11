@@ -1,12 +1,10 @@
 {
-  "name": "vite-project",
-  "private": true,
+  "name": "my-react-app",
   "version": "0.0.0",
-  "type": "module",
+  "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {

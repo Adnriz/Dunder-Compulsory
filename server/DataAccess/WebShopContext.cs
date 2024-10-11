@@ -9,8 +9,7 @@ namespace DataAccess
             : base(options)
         {
         }
-
-        // New DbSet properties
+        
         public virtual DbSet<Customer> Customers { get; set; }
         public virtual DbSet<Paper> Papers { get; set; }
         public virtual DbSet<Property> Properties { get; set; }
